@@ -3,3 +3,4 @@
 17:31 project builds and displays its name
 18:02 basic TCP server working
 18:26 separated session handling into handle.c
+18:35 added jsmn from https://github.com/zserge/jsmn
