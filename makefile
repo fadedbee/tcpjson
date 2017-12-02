@@ -1,5 +1,5 @@
 CC=gcc
-CFLAGS=-I. -Wall -Werror -Wpedantic
+CFLAGS=-I. -Wall -Werror -Wpedantic -DJSMN_PARENT_LINKS
 DEPS = handle.h jsmn.h readline.h
 OBJ = tcpjson.o handle.o jsmn.o readline.o
 

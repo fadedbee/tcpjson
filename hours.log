@@ -4,15 +4,32 @@
 18:02 basic TCP server working
 18:26 separated session handling into handle.c
 18:35 added jsmn from https://github.com/zserge/jsmn
+=====
+ 1:15
+
 
 2017-12-02
 06:45 making jsmn
 06:47 jsmn compiles
 07:02 created test script
 08:15
+-----
+ 1:30
 
 09:20 line splitting
 09:20 protocol design
 10:05
+-----
+ 0:45
 
 11:05 JSON ping implementation
+11:50
+-----
+ 0:45
+
+12:05 JSON ping implementation continued
+12:55
+-----
+ 0:50
+
+13:10 JSON ping implementation continued

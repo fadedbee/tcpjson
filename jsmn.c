@@ -1,4 +1,15 @@
+#include <string.h>
 #include "jsmn.h"
+
+/**
+ * Compares a token with a string.
+ */
+int jsmn_string_equal(const char *json, jsmntok_t *tok, const char *s) {
+	if (tok->type == JSMN_STRING && (int) strlen(s) == tok->end - tok->start && strncmp(json + tok->start, s, tok->end - tok->start) == 0) {
+		return 0;
+	}
+	return -1;
+}
 
 /**
  * Allocates a fresh unused token from the token pull.
