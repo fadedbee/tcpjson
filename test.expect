@@ -1,0 +1,8 @@
+#!/usr/bin/expect
+
+set timeout 30
+spawn nc localhost 2222
+send "ping\n"
+expect "pong\r"
+send "ping2\n"
+expect "pong2\r"
