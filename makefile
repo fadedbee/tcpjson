@@ -1,7 +1,7 @@
 CC=gcc
 CFLAGS=-I. -Wall -Werror -Wpedantic
-DEPS = handle.h jsmn.h
-OBJ = tcpjson.o handle.o jsmn.o
+DEPS = handle.h jsmn.h readline.h
+OBJ = tcpjson.o handle.o jsmn.o readline.o
 
 %.o: %.c $(DEPS)
 		$(CC) -c -o $@ $< $(CFLAGS)
