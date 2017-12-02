@@ -4,3 +4,9 @@
 18:02 basic TCP server working
 18:26 separated session handling into handle.c
 18:35 added jsmn from https://github.com/zserge/jsmn
+
+2017-12-02
+06:45 making jsmn
+06:47 jsmn compiles
+
+
