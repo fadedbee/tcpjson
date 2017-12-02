@@ -1,8 +1,19 @@
 #!/usr/bin/expect
 
+# N.B. The outer set of curly brackets are quotes in TCL/expect.
+# The JSON received by the server only has a *single* set of outer curly 
+# brackets.
+# The \n is sent on a separate line as the curly quote sends a literal \n, 
+# rather than a 0x10.  (Double quotes *do* send a 0x10 for \n, but then I 
+# would have to escape every double quote inside the JSON.)
+
 set timeout 30
 spawn nc localhost 2222
-send "ping\n"
-expect "pong\r"
-send "ping\n"
-expect "pong\r"
+send {{"method":"GET", "path":["ping"]}}
+send "\n"
+expect {{"code": 204}}
+expect "\n"
+send {{"method":"GET", "path":["ping"]}}
+send "\n"
+expect {{"code": 204}}
+expect "\n"

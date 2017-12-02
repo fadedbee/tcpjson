@@ -4,6 +4,10 @@ This JSON is structured so as to be easy to convert to an HTTP REST interface, i
 
 Examples:
 
+// keepalive ping
+rx: {"method":"GET", "path":["ping"]}
+tx: {"code": 204}
+
 // create a new product line
 rx: {"method":"PUT", "path":["stock", "product"], "body":{"desc":"blue widget", "price":1999}}}
 tx: {"code": 201, body:{"path":["stock", "product", "2345"]}}
