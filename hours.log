@@ -33,3 +33,8 @@
  0:50
 
 13:10 JSON ping implementation continued
+13:58 investigate "niv" project
+14:49 creating GET stock handler
+      - needed to make changes to makefile to work on RH4.7
+      - merged IMC makefile.elf into makefile
+      - ffbackend runs when tcp session ends

@@ -5,6 +5,7 @@
 #include <unistd.h>
 #include "readline.h"
 #include "jsmn.h"
+#include "ffbackend.h"
 
 #define MAX_LINE_LEN 4096
 #define JSON_PONG "{\"code\": 204}\n"
@@ -55,5 +56,6 @@ int handle(int sockfd) {
 		}
 	}
 	printf("handling completed\n");
+	ffbackend();
 	return 0;
 }
