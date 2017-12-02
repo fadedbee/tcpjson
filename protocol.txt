@@ -1,0 +1,26 @@
+The protocol used on top of TCP is Newline Delimited JSON.
+
+This JSON is structured so as to be easy to convert to an HTTP REST interface, if required, later.
+
+Examples:
+
+// create a new product line
+rx: {"method":"PUT", "path":["stock", "product"], "body":{"desc":"blue widget", "price":1999}}}
+tx: {"code": 201, body:{"path":["stock", "product", "2345"]}}
+
+// update its price
+rx: {"method":"POST", "path":["stock", "product", "2345"], "body":{"price":999}}}
+tx: {"code": 204}}
+
+// get the product information
+rx: {"method":"GET", "path":["stock", "product", "2345"]}
+tx: {"code": 200, body:{"desc":"blue widget", "price":999}}
+
+// delete the product line
+rx: {"method":"DELETE", "path":["stock", "product", "2345"]}
+tx: {"code": 204}
+
+// fail to retrieve the deleted product line
+rx: {"method":"GET", "path":["stock", "product", "2345"]}
+tx: {"code": 404}}
+
