@@ -43,8 +43,9 @@ int handle(int sockfd) {
 		int method = -1;
 		int path = -1;  // all parts of the path
 		int path0 = -1; // the first part of the path
-		for (int i = 1; i < num_tokens; i++) {
+		for (int i = 0; i < num_tokens; i++) {
 			printf("token %d %d %d %d %d %d\n", i, t[i].type, t[i].start, t[i].end, t[i].size, t[i].parent);
+			/*
 			if (jsmn_string_equal(line, &t[i], "method") == 0) {
 				printf("- method: %.*s\n", t[i+1].end-t[i+1].start, line + t[i+1].start);
 				method = i+1;
@@ -55,8 +56,8 @@ int handle(int sockfd) {
 				i++;
 			} else if (t[i].type == JSMN_STRING && t[i].parent == path && path0 == -1) {
 				path0 = i+1;
-			} else {
-				printf("Unexpected key: %.*s\n", t[i].end-t[i].start, line + t[i].start);
+			} else*/ {
+				printf("Unexpected key: |%.*s|\n", t[i].end-t[i].start, line + t[i].start);
 			}
 		}
 		printf("%d %d %d\n", method, path, path0);

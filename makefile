@@ -1,6 +1,6 @@
 CC=gcc
 CFLAGS=-I. -Wall -Werror -Wpedantic -DJSMN_PARENT_LINKS
-DEPS = handle.h jsmn.h readline.h
+DEPS = makefile handle.h jsmn.h readline.h
 OBJ = tcpjson.o handle.o jsmn.o readline.o
 
 %.o: %.c $(DEPS)
