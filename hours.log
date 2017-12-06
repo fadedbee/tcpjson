@@ -38,3 +38,16 @@
       - needed to make changes to makefile to work on RH4.7
       - merged IMC makefile.elf into makefile
       - ffbackend runs when tcp session ends
+17:05
+
+2017-12-03
+07:45 looking for ffisam() call examples
+07:50
+
+2017-12-06
+09:55 digesting ffisam call examples
+11:45
+
+19:40 implementing a read function in ffbackend
+
+
