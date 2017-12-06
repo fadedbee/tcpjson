@@ -14,8 +14,9 @@
 
 EXTERN RESRC *testPanel,*testDD;
 
-int ffbackend()
-{
+
+
+void ffbackend_begin() {
  	sysHeaderDaemon();  
 	printf("ffbackend starting...\r\n");
 	
@@ -29,7 +30,22 @@ int ffbackend()
                 printf("ISAM Error C\n");
 		exit(1);
         }
-	
+
+        printf("pre-ISAM B\n");
+        ASSS(STOCK.PCODE,"1234");
+        printf("pre-ISAM B1\n");
+        if(!ffisam(STOCK_BNR,RK,1,0)) {
+                printf("post-ISAM B2\n");
+                char description[sizeof(STOCK.DESC)+1];
+                GETSTR(description,STOCK.DESC);
+                printf("post-ISAM B3\n");
+                printf("%s\n",description);
+        } else {
+                printf("ISAM Error B\n");
+                exit(1);
+        }
+        printf("post-ISAM B4\n");
+}
 
 /*
         printf("pre-ISAM A\n");
@@ -48,7 +64,6 @@ int ffbackend()
                 printf("ISAM Error A\n");
 		exit(1);
         }
-*/
 
 
         printf("pre-ISAM B\n");
@@ -66,9 +81,32 @@ int ffbackend()
         }
         printf("post-ISAM B4\n");
 
+*/
+
+void ffbackend_end() {
 	ffisam(STOCK_BNR,CF);
 
 	printf("ffbackend finishing...\r\n");
 	sleep(3);
 	ffend(0);
+}
+
+// FIXME: For PoC these functions do the JSON formatting, as well as the data retreival.
+// TODO: Add a separate serialisation layer.
+size_t ffbackend_get_stock(char *pcode, size_t pcode_len, char *out, size_t out_len) {
+	char pcode_zts[pcode_len + 1];
+	memcpy(pcode_zts, pcode, pcode_len);
+	pcode_zts[pcode_len] = '\0';
+        ASSS(STOCK.PCODE, pcode_zts); // FIXME: Find a way of assigning without having to create zero terminated strings.
+
+        if(!ffisam(STOCK_BNR,RK,1,0)) {
+        	char pcode[sizeof(STOCK.PCODE)+1];
+        	char description[sizeof(STOCK.DESC)+1];
+                GETSTR(pcode,STOCK.PCODE);
+                GETSTR(description,STOCK.DESC);
+		return snprintf(out, out_len, "{\"code\" :200, \"body\":{\"pcode\":\"%s\", \"description\":\"%s\"}\n", pcode, description);
+        } else {
+		return snprintf(out, out_len, "{\"code\":404}\n");
+        }
+
 }

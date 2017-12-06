@@ -11,6 +11,7 @@
 #define JSON_PONG "{\"code\": 204}\n"
 
 int handle(int sockfd) {
+	ffbackend_begin(); // FIXME: move this call inside of the other ffbackend_ functions
 	char line[MAX_LINE_LEN];
 	for (;;) {
 		ssize_t line_len = readline(sockfd, sizeof(line), line);
@@ -38,24 +39,37 @@ int handle(int sockfd) {
 		int method = -1;
 		int path = -1;  // all parts of the path
 		int path0 = -1; // the first part of the path
-		for (int i = 0; i < num_tokens; i++) {
+		int path1 = -1; // the first part of the path
+		for (int i = 1; i < num_tokens; i++) {
 			if (jsmn_string_equal(line, &t[i], "method") == 0) {
 				method = ++i;
 			} else if (jsmn_string_equal(line, &t[i], "path") == 0) {
 				path = ++i;
 			} else if (t[i].type == JSMN_STRING && t[i].parent == path && path0 == -1) {
 				path0 = i;
+			} else if (t[i].type == JSMN_STRING && t[i].parent == path && path1 == -1) {
+				path1 = i;
 			} else {
 				printf("Unexpected key: |%.*s|\n", t[i].end-t[i].start, line + t[i].start);
 			}
 		}
 		if (jsmn_string_equal(line, &t[method], "GET") == 0 && jsmn_string_equal(line, &t[path0], "ping") == 0) {
 			write(sockfd, JSON_PONG, sizeof(JSON_PONG)); 
+		} else if (jsmn_string_equal(line, &t[method], "GET") == 0 && jsmn_string_equal(line, &t[path0], "stock") == 0) {
+#define JSON_SZ 4096
+			char json[JSON_SZ];
+			// FIXME: it's not nice to pass strings as pointers and lengths, but to do otherwise causes
+			// unneeded allocations.
+			size_t num = ffbackend_get_stock(line + t[path1].start, t[path1].end-t[path1].start, json, sizeof(json));
+			if (num >= JSON_SZ) { // handle result that was too big
+			  	snprintf(json, JSON_SZ, "{\"code\":500}");
+			}
+			write(sockfd, json, strlen(json)); 
 		} else {
 			printf("unhandled json: %s\n", line);
 		}
 	}
 	printf("handling completed\n");
-	ffbackend();
+	ffbackend_end(); // FIXME: move this call inside of the other ffbackend_ functions
 	return 0;
 }

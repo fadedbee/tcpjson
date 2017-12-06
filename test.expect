@@ -14,7 +14,12 @@ send {{"method":"GET", "path":["ping"]}}
 send "\n"
 expect {{"code": 204}}
 expect "\n"
-#send {{"method":"GET", "path":["ping"]}}
-#send "\n"
-#expect {{"code": 204}}
-#expect "\n"
+send {{"method":"GET", "path":["ping"]}}
+send "\n"
+expect {{"code": 204}}
+expect "\n"
+send {{"method":"GET", "path":["stock", "1234"]}}
+send "\n"
+expect {{"code": 200, "body":{"pcode": "1234", "description", "TEST DATA2"}}}
+expect "\n"
+

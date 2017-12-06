@@ -9,22 +9,22 @@ rx: {"method":"GET", "path":["ping"]}
 tx: {"code": 204}
 
 // create a new product line
-rx: {"method":"PUT", "path":["stock", "product"], "body":{"desc":"blue widget", "price":1999}}}
+rx: {"method":"PUT", "path":["stock"], "body":{"desc":"blue widget", "price":1999}}}
 tx: {"code": 201, body:{"path":["stock", "product", "2345"]}}
 
 // update its price
-rx: {"method":"POST", "path":["stock", "product", "2345"], "body":{"price":999}}}
+rx: {"method":"POST", "path":["stock", "2345"], "body":{"price":999}}}
 tx: {"code": 204}}
 
 // get the product information
-rx: {"method":"GET", "path":["stock", "product", "2345"]}
-tx: {"code": 200, body:{"desc":"blue widget", "price":999}}
+rx: {"method":"GET", "path":["stock", "2345"]}
+tx: {"code": 200, body:{"pcode":"2345", "desc":"blue widget", "price":999}}
 
 // delete the product line
-rx: {"method":"DELETE", "path":["stock", "product", "2345"]}
+rx: {"method":"DELETE", "path":["stock", "2345"]}
 tx: {"code": 204}
 
 // fail to retrieve the deleted product line
-rx: {"method":"GET", "path":["stock", "product", "2345"]}
+rx: {"method":"GET", "path":["stock", "2345"]}
 tx: {"code": 404}}
 
