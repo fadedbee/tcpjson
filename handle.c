@@ -9,6 +9,8 @@
 
 #define MAX_LINE_LEN 4096
 #define JSON_PONG "{\"code\": 204}\n"
+#define JSON_UNHANDLED "{\"code\": 404, \"body\":\"unhandled path\"}\n"
+#define JSON_SZ 4096
 
 int handle(int sockfd) {
 	ffbackend_begin(); // FIXME: move this call inside of the other ffbackend_ functions
@@ -53,20 +55,18 @@ int handle(int sockfd) {
 				printf("Unexpected key: |%.*s|\n", t[i].end-t[i].start, line + t[i].start);
 			}
 		}
+
+		char json[JSON_SZ]; // space for ffbackend to write JSON
 		if (jsmn_string_equal(line, &t[method], "GET") == 0 && jsmn_string_equal(line, &t[path0], "ping") == 0) {
 			write(sockfd, JSON_PONG, sizeof(JSON_PONG)); 
 		} else if (jsmn_string_equal(line, &t[method], "GET") == 0 && jsmn_string_equal(line, &t[path0], "stock") == 0) {
-#define JSON_SZ 4096
-			char json[JSON_SZ];
 			// FIXME: it's not nice to pass strings as pointers and lengths, but to do otherwise causes
 			// unneeded allocations.
-			size_t num = ffbackend_get_stock(line + t[path1].start, t[path1].end-t[path1].start, json, sizeof(json));
-			if (num >= JSON_SZ) { // handle result that was too big
-			  	snprintf(json, JSON_SZ, "{\"code\":500}");
-			}
+			ffbackend_get_stock(line + t[path1].start, t[path1].end-t[path1].start, json, sizeof(json));
 			write(sockfd, json, strlen(json)); 
 		} else {
 			printf("unhandled json: %s\n", line);
+			write(sockfd, JSON_UNHANDLED, sizeof(JSON_UNHANDLED)); 
 		}
 	}
 	printf("handling completed\n");

@@ -9,6 +9,7 @@
 
 #include "../common/common.c"
 #include <string.h>
+#include <stdint.h>
 
 #include "niv_test.h" // contains the definition of STOCK
 
@@ -91,6 +92,58 @@ void ffbackend_end() {
 	ffend(0);
 }
 
+/*
+ * This snprintfs to the out buffer.
+ * If the return value is greater-than or equal to out_len, then the buffer was not big enough.
+ */
+static size_t stock_to_json(char* out, size_t out_len) {
+	// FIXME: The field names and types should be inferred at runtime from the data dictionary,
+	// rather than being hard-coded.
+	// There will need to be overrides for some names and conversion factors for some fields.
+        int32_t uniqkey;
+        char pcode[sizeof(STOCK.PCODE)+1];
+        char desc[sizeof(STOCK.DESC)+1];
+        int16_t brand_id;
+        char mfg_p_no[sizeof(STOCK.MFG_P_NO)+1];
+        int32_t list_pr;
+        int32_t sell_pr;
+        int16_t unit_id;
+        int32_t in_stk;
+        char colour[sizeof(STOCK.COLOUR)+1];
+        char p_group[sizeof(STOCK.P_GROUP)+1];
+        int32_t last_po; //date
+        uniqkey = GETL(STOCK.UNIQKEY);
+        GETSTR(pcode,STOCK.PCODE);
+        GETSTR(desc,STOCK.DESC);
+        brand_id = GETI(STOCK.BRAND_ID); // FIXME: how do I get a short?
+        GETSTR(mfg_p_no,STOCK.MFG_P_NO);
+        list_pr = GETL(STOCK.LIST_PR);
+        sell_pr = GETL(STOCK.SELL_PR);
+        unit_id = GETI(STOCK.UNIT_ID); // FIXME: how do I get a short?
+        in_stk = GETL(STOCK.IN_STK);
+        GETSTR(colour,STOCK.COLOUR);
+        GETSTR(p_group,STOCK.P_GROUP);
+        last_po = GETL(STOCK.LAST_PO); // FIXME: how do dates work in Multisys/FRED?
+	// TODO: This function would be better if it just returned the "body" section below and another 
+	// function (at a higher layer) wrapped it with the code.
+	return snprintf(out, out_len, "{\"code\": 200, \"body\":{"
+			"\"uniqkey\":%d, "
+			"\"pcode\":\"%s\", "
+			"\"desc\":\"%s\", "
+			"\"brand_id\":%d, "
+			"\"mfg_p_no\":\"%s\", "
+			"\"list_pr\":%d, "
+			"\"sell_pr\":%d, "
+			"\"unit_id\":%d, "
+			"\"in_stk\":%d, "
+			"\"colour\":\"%s\", "
+			"\"p_group\":\"%s\", "
+			"\"last_po\":%d"
+			"}}\n", 
+			uniqkey, pcode, desc, brand_id, mfg_p_no, list_pr, sell_pr, unit_id,
+			in_stk, colour, p_group, last_po);
+}
+
 // FIXME: For PoC these functions do the JSON formatting, as well as the data retreival.
 // TODO: Add a separate serialisation layer.
 size_t ffbackend_get_stock(char *pcode, size_t pcode_len, char *out, size_t out_len) {
@@ -100,13 +153,13 @@ size_t ffbackend_get_stock(char *pcode, size_t pcode_len, char *out, size_t out_
         ASSS(STOCK.PCODE, pcode_zts); // FIXME: Find a way of assigning without having to create zero terminated strings.
 
         if(!ffisam(STOCK_BNR,RK,1,0)) {
-        	char pcode[sizeof(STOCK.PCODE)+1];
-        	char description[sizeof(STOCK.DESC)+1];
-                GETSTR(pcode,STOCK.PCODE);
-                GETSTR(description,STOCK.DESC);
-		return snprintf(out, out_len, "{\"code\" :200, \"body\":{\"pcode\":\"%s\", \"description\":\"%s\"}\n", pcode, description);
+		size_t num = stock_to_json(out, out_len);
+		if (num >= out_len) {
+			return snprintf(out, out_len, "{\"code\":500, \"body\":\"JSON longer than output buffer\"}\n");
+		} else {
+			return num;
+		}
         } else {
 		return snprintf(out, out_len, "{\"code\":404}\n");
         }
-
 }

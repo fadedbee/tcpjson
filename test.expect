@@ -18,8 +18,12 @@ send {{"method":"GET", "path":["ping"]}}
 send "\n"
 expect {{"code": 204}}
 expect "\n"
+send {{"method":"GET", "path":["a","path","that","is","not","handled"]}}
+send "\n"
+expect {{"code": 404, "body":"unhandled path"}}
+expect "\n"
 send {{"method":"GET", "path":["stock", "1234"]}}
 send "\n"
-expect {{"code": 200, "body":{"pcode": "1234", "description", "TEST DATA2"}}}
+expect {{"code": 200, "body":{"uniqkey":1, "pcode":"1234", "desc":"2", "brand_id":1, "mfg_p_no":"TEST_MFG_PART_NO2", "list_pr":2, "sell_pr":3, "unit_id":1, "in_stk":0, "colour":"YLW", "p_group":"TEST", "last_po":291117}}}
 expect "\n"
 
