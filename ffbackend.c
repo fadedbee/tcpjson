@@ -93,8 +93,16 @@ void ffbackend_end() {
 }
 
 /*
+ * This decodes the JSON in "body" as a stock item.
+ * FIXME: It currently writes to a global STOCK struct, rather than taking a struct as an argument.
+ */
+static size_t json_to_stock(char *body, size_t body_len) {
+}
+
+/*
  * This snprintfs to the out buffer.
  * If the return value is greater-than or equal to out_len, then the buffer was not big enough.
+ * FIXME: It currently reads from a global STOCK struct, rather than taking a struct as an argument.
  */
 static size_t stock_to_json(char* out, size_t out_len) {
 	// FIXME: The field names and types should be inferred at runtime from the data dictionary,
@@ -144,8 +152,18 @@ static size_t stock_to_json(char* out, size_t out_len) {
 			in_stk, colour, p_group, last_po);
 }
 
-// FIXME: For PoC these functions do the JSON formatting, as well as the data retreival.
-// TODO: Add a separate serialisation layer.
+/*
+ * Create a new stock item, or output an error.
+ */
+size_t ffbackend_put_stock(char *pcode, size_t pcode_len, char *body, char body_len, char *out, size_t out_len) {
+	return snprintf(out, out_len, "{\"code\":500, \"body\":\"error creating stock item\"}\n");
+}
+
+/*
+ * Get a stock item, or output an error.
+ * FIXME: For PoC these functions do the JSON formatting, as well as the data retreival.
+ * TODO: Add a separate serialisation layer.
+ */
 size_t ffbackend_get_stock(char *pcode, size_t pcode_len, char *out, size_t out_len) {
 	char pcode_zts[pcode_len + 1];
 	memcpy(pcode_zts, pcode, pcode_len);
@@ -160,6 +178,19 @@ size_t ffbackend_get_stock(char *pcode, size_t pcode_len, char *out, size_t out_
 			return num;
 		}
         } else {
-		return snprintf(out, out_len, "{\"code\":404}\n");
+		return snprintf(out, out_len, "{\"code\":404, \"body\":\"stock pcode not found\"}\n");
         }
 }
+
+/*
+ * Update a stock item, or output an error.
+ */
+size_t ffbackend_post_stock(char *pcode, size_t pcode_len, char *body, char body_len, char *out, size_t out_len) {
+}
+
+/*
+ * Delete a stock item, or output an error.
+ */
+size_t ffbackend_delete_stock(char *pcode, size_t pcode_len, char *out, size_t out_len) {
+}
+

@@ -41,7 +41,8 @@ int handle(int sockfd) {
 		int method = -1;
 		int path = -1;  // all parts of the path
 		int path0 = -1; // the first part of the path
-		int path1 = -1; // the first part of the path
+		int path1 = -1; // the second part of the path
+		int body = -1; // the body
 		for (int i = 1; i < num_tokens; i++) {
 			if (jsmn_string_equal(line, &t[i], "method") == 0) {
 				method = ++i;
@@ -51,6 +52,8 @@ int handle(int sockfd) {
 				path0 = i;
 			} else if (t[i].type == JSMN_STRING && t[i].parent == path && path1 == -1) {
 				path1 = i;
+			} else if (jsmn_string_equal(line, &t[i], "body") == 0) {
+				body = ++i;
 			} else {
 				printf("Unexpected key: |%.*s|\n", t[i].end-t[i].start, line + t[i].start);
 			}
@@ -59,9 +62,14 @@ int handle(int sockfd) {
 		char json[JSON_SZ]; // space for ffbackend to write JSON
 		if (jsmn_string_equal(line, &t[method], "GET") == 0 && jsmn_string_equal(line, &t[path0], "ping") == 0) {
 			write(sockfd, JSON_PONG, sizeof(JSON_PONG)); 
-		} else if (jsmn_string_equal(line, &t[method], "GET") == 0 && jsmn_string_equal(line, &t[path0], "stock") == 0) {
+		} else if (jsmn_string_equal(line, &t[method], "PUT") == 0 && jsmn_string_equal(line, &t[path0], "stock") == 0) {
 			// FIXME: it's not nice to pass strings as pointers and lengths, but to do otherwise causes
 			// unneeded allocations.
+			ffbackend_put_stock(line + t[path1].start, t[path1].end-t[path1].start, 
+					    line + t[body].start, t[body].end-t[body].start,
+					    json, sizeof(json));
+			write(sockfd, json, strlen(json)); 
+		} else if (jsmn_string_equal(line, &t[method], "GET") == 0 && jsmn_string_equal(line, &t[path0], "stock") == 0) {
 			ffbackend_get_stock(line + t[path1].start, t[path1].end-t[path1].start, json, sizeof(json));
 			write(sockfd, json, strlen(json)); 
 		} else {
