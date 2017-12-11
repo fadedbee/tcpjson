@@ -70,6 +70,7 @@ int handle(int sockfd) {
 
 		char json[JSON_SZ]; // space for ffbackend to write JSON
 		if (jsmn_string_equal(line, &t[method], "GET") == 0 && jsmn_string_equal(line, &t[path0], "ping") == 0) {
+			printf("tx: %s\n", JSON_PONG); // TODO: unify these logging calls with the output below
 			write(sockfd, JSON_PONG, sizeof(JSON_PONG)); 
 		} else if (jsmn_string_equal(line, &t[method], "PUT") == 0 && jsmn_string_equal(line, &t[path0], "stock") == 0) {
 			// FIXME: it's not nice to pass strings as pointers and lengths, but to do otherwise causes
@@ -77,7 +78,7 @@ int handle(int sockfd) {
 			ffbackend_put_stock(line + t[path1].start, t[path1].end-t[path1].start, 
 					    line + t[body].start, t[body].end-t[body].start,
 					    json, sizeof(json));
-			printf("tx: %s\n", json); // TODO: unify these logging calls with the output below
+			printf("tx: %s\n", json);
 			write(sockfd, json, strlen(json)); 
 		} else if (jsmn_string_equal(line, &t[method], "GET") == 0 && jsmn_string_equal(line, &t[path0], "stock") == 0) {
 			ffbackend_get_stock(line + t[path1].start, t[path1].end-t[path1].start, json, sizeof(json));

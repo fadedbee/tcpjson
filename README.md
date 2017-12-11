@@ -34,6 +34,54 @@ $ ./test.expect
 
 N.B. Resetting the data files is only required so that the created record has the expected UNIQ_KEY of 3.
 
+## Results of Test
+
+<pre>
+tcpjson started...
+child
+parent
+ffbackend starting...
+rx: {"method":"GET", "path":["ping"]}
+tx: {"code": 204}
+
+rx: {"method":"GET", "path":["ping"]}
+tx: {"code": 204}
+
+rx: {"method":"GET", "path":["a","path","that","is","not","handled"]}
+unhandled json: {"method":"GET", "path":["a","path","that","is","not","handled"]}
+tx: {"code": 404, "body":"unhandled path"}
+
+rx: {"method":"GET", "path":["stock","BADCODE"]}
+tx: {"code":404, "body":"stock pcode not found"}
+
+rx: {"method":"PUT", "path":["stock", "5678"], "body":{"pcode":"5678", "desc":"2", "brand_id":1, "mfg_p_no":"TEST_MFG_PART_NO2", "list_pr":2, "sell_pr":3, "unit_id":1, "in_stk":0, "colour":"YLW", "p_group":"TEST", "last_po":291117}}
+body: {"pcode":"5678", "desc":"2", "brand_id":1, "mfg_p_no":"TEST_MFG_PART_NO2", "list_pr":2, "sell_pr":3, "unit_id":1, "in_stk":0, "colour":"YLW", "p_group":"TEST", "last_po":291117} 0
+tx: {"code":201, "body":"created"}
+
+rx: {"method":"GET", "path":["stock", "5678"]}
+tx: {"code": 200, "body":{"uniqkey":3, "pcode":"5678", "desc":"2", "brand_id":1, "mfg_p_no":"TEST_MFG_PART_NO2", "list_pr":2, "sell_pr":3, "unit_id":1, "in_stk":0, "colour":"YLW", "p_group":"TEST", "last_po":291117}}
+
+rx: {"method":"POST", "path":["stock", "5678"], "body":{"mfg_p_no":"NEW_PART_NO", "colour":"GRN"}}
+body: {"mfg_p_no":"NEW_PART_NO", "colour":"GRN"} 3
+tx: {"code":200, "body":"updated"}
+
+rx: {"method":"GET", "path":["stock", "5678"]}
+tx: {"code": 200, "body":{"uniqkey":3, "pcode":"5678", "desc":"2", "brand_id":1, "mfg_p_no":"NEW_PART_NO", "list_pr":2, "sell_pr":3, "unit_id":1, "in_stk":0, "colour":"GRN", "p_group":"TEST", "last_po":291117}}
+
+rx: {"method":"DELETE", "path":["stock", "5678"]}
+tx: {"code":200, "body":"deleted"}
+
+rx: {"method":"GET", "path":["stock","5678"]}
+tx: {"code":404, "body":"stock pcode not found"}
+
+rx: {"method":"DELETE", "path":["stock", "5678"]}
+tx: {"code":404, "body":"stock pcode not found"}
+
+rx: 
+handling completed
+ffbackend finished
+</pre>
+
 ## Further Work
 
 - Is jsmn the best way to parse JSON?  I've previously used http://www.digip.org/jansson/ on other projects.
