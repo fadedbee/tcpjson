@@ -55,7 +55,11 @@ int handle(int sockfd) {
 			} else if (jsmn_string_equal(line, &t[i], "body") == 0) {
 				body = ++i;
 			} else {
-				printf("Unexpected key: |%.*s|\n", t[i].end-t[i].start, line + t[i].start);
+			  	if (t[i].parent == 0) {
+					printf("unexpected key: |%.*s|\n", t[i].end-t[i].start, line + t[i].start);
+				} else {
+				  	// deeper keys are processed by json_to_stock
+				}
 			}
 		}
 
@@ -68,12 +72,25 @@ int handle(int sockfd) {
 			ffbackend_put_stock(line + t[path1].start, t[path1].end-t[path1].start, 
 					    line + t[body].start, t[body].end-t[body].start,
 					    json, sizeof(json));
+			printf("tx: %s\n", json); // TODO: unify these logging calls with the output below
 			write(sockfd, json, strlen(json)); 
 		} else if (jsmn_string_equal(line, &t[method], "GET") == 0 && jsmn_string_equal(line, &t[path0], "stock") == 0) {
 			ffbackend_get_stock(line + t[path1].start, t[path1].end-t[path1].start, json, sizeof(json));
+			printf("tx: %s\n", json);
+			write(sockfd, json, strlen(json)); 
+		} else if (jsmn_string_equal(line, &t[method], "POST") == 0 && jsmn_string_equal(line, &t[path0], "stock") == 0) {
+			ffbackend_post_stock(line + t[path1].start, t[path1].end-t[path1].start, 
+					     line + t[body].start, t[body].end-t[body].start,
+					     json, sizeof(json));
+			printf("tx: %s\n", json);
+			write(sockfd, json, strlen(json)); 
+		} else if (jsmn_string_equal(line, &t[method], "DELETE") == 0 && jsmn_string_equal(line, &t[path0], "stock") == 0) {
+			ffbackend_delete_stock(line + t[path1].start, t[path1].end-t[path1].start, json, sizeof(json));
+			printf("tx: %s\n", json);
 			write(sockfd, json, strlen(json)); 
 		} else {
 			printf("unhandled json: %s\n", line);
+			printf("tx: %s\n", JSON_UNHANDLED);
 			write(sockfd, JSON_UNHANDLED, sizeof(JSON_UNHANDLED)); 
 		}
 	}

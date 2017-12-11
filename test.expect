@@ -1,35 +1,71 @@
 #!/usr/bin/expect
-
+#
+# This test script uses "expect" to exercise the TCP/JSON server.
+#
 # N.B. The outer set of curly brackets are quotes in TCL/expect.
 # The JSON received by the server only has a *single* set of outer curly 
 # brackets.
+#
 # The \n is sent on a separate line as the curly quote sends a literal \n, 
-# rather than a 0x10.  (Double quotes *do* send a 0x10 for \n, but then I 
+# rather than 0x10.  (Double quotes *do* send a 0x10 for \n, but then I 
 # would have to escape every double quote inside the JSON.)
 # Asked question: https://stackoverflow.com/q/47607455/129805
 
-set timeout 30
+set timeout 10
 spawn nc localhost 2222
+
 send {{"method":"GET", "path":["ping"]}}
 send "\n"
 expect {{"code": 204}}
 expect "\n"
+
 send {{"method":"GET", "path":["ping"]}}
 send "\n"
 expect {{"code": 204}}
 expect "\n"
+
 send {{"method":"GET", "path":["a","path","that","is","not","handled"]}}
 send "\n"
 expect {{"code": 404, "body":"unhandled path"}}
 expect "\n"
+
 send {{"method":"GET", "path":["stock","BADCODE"]}}
 send "\n"
 expect {{"code":404, "body":"stock pcode not found"}}
 expect "\n"
-send {{"method":"GET", "path":["stock", "1234"]}}
+
+send {{"method":"PUT", "path":["stock", "5678"], "body":{"pcode":"5678", "desc":"2", "brand_id":1, "mfg_p_no":"TEST_MFG_PART_NO2", "list_pr":2, "sell_pr":3, "unit_id":1, "in_stk":0, "colour":"YLW", "p_group":"TEST", "last_po":291117}}}
 send "\n"
-expect {{"code": 200, "body":{"uniqkey":1, "pcode":"1234", "desc":"2", "brand_id":1, "mfg_p_no":"TEST_MFG_PART_NO2", "list_pr":2, "sell_pr":3, "unit_id":1, "in_stk":0, "colour":"YLW", "p_group":"TEST", "last_po":291117}}}
+expect {{"code":201, "body":"created"}}
 expect "\n"
-send {{"method":"PUT", "path":["stock", "5678"], "body":{"uniqkey":1, "pcode":"5678", "desc":"2", "brand_id":1, "mfg_p_no":"TEST_MFG_PART_NO2", "list_pr":2, "sell_pr":3, "unit_id":1, "in_stk":0, "colour":"YLW", "p_group":"TEST", "last_po":291117}}}
+
+send {{"method":"GET", "path":["stock", "5678"]}}
 send "\n"
-expect "kjhihiu"
+expect {{"code": 200, "body":{"uniqkey":3, "pcode":"5678", "desc":"2", "brand_id":1, "mfg_p_no":"TEST_MFG_PART_NO2", "list_pr":2, "sell_pr":3, "unit_id":1, "in_stk":0, "colour":"YLW", "p_group":"TEST", "last_po":291117}}}
+expect "\n"
+
+send {{"method":"POST", "path":["stock", "5678"], "body":{"mfg_p_no":"NEW_PART_NO", "colour":"GRN"}}}
+send "\n"
+expect {{"code":200, "body":"updated"}}
+expect "\n"
+
+send {{"method":"GET", "path":["stock", "5678"]}}
+send "\n"
+expect {{"code": 200, "body":{"uniqkey":3, "pcode":"5678", "desc":"2", "brand_id":1, "mfg_p_no":"NEW_PART_NO", "list_pr":2, "sell_pr":3, "unit_id":1, "in_stk":0, "colour":"GRN", "p_group":"TEST", "last_po":291117}}}
+expect "\n"
+
+send {{"method":"DELETE", "path":["stock", "5678"]}}
+send "\n"
+expect {{"code":200, "body":"deleted"}}
+expect "\n"
+
+send {{"method":"GET", "path":["stock","5678"]}}
+send "\n"
+expect {{"code":404, "body":"stock pcode not found"}}
+expect "\n"
+
+send {{"method":"DELETE", "path":["stock", "5678"]}}
+send "\n"
+expect {{"code":404, "body":"stock pcode not found"}}
+expect "\n"
+

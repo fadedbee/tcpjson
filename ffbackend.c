@@ -10,12 +10,10 @@
 #include "../common/common.c"
 #include <string.h>
 #include <stdint.h>
-
+#include "jsmn.h"
 #include "niv_test.h" // contains the definition of STOCK
 
 EXTERN RESRC *testPanel,*testDD;
-
-
 
 void ffbackend_begin() {
  	sysHeaderDaemon();  
@@ -24,79 +22,46 @@ void ffbackend_begin() {
 	testPanel = ffopenrsc("/home/multisys/source/resources/test.pnl");
 	testDD = ffopenrsc("/home/multisys/source/resources/niv_test.rsc");	
 
-        printf("pre-ISAM C\n");
 	ffisam(0,SO,NUM_OPEN_FILES,512);
 	int status = ffisam(STOCK_BNR,OF,testDD,"niv_test","",&STOCK,NULLP) && iserrno;
 	if (status) {
-                printf("ISAM Error C\n");
+                printf("ISAM Error\n");
 		exit(1);
         }
-
-        printf("pre-ISAM B\n");
-        ASSS(STOCK.PCODE,"1234");
-        printf("pre-ISAM B1\n");
-        if(!ffisam(STOCK_BNR,RK,1,0)) {
-                printf("post-ISAM B2\n");
-                char description[sizeof(STOCK.DESC)+1];
-                GETSTR(description,STOCK.DESC);
-                printf("post-ISAM B3\n");
-                printf("%s\n",description);
-        } else {
-                printf("ISAM Error B\n");
-                exit(1);
-        }
-        printf("post-ISAM B4\n");
 }
-
-/*
-        printf("pre-ISAM A\n");
-        ASSS(STOCK.PCODE,"1234");
-        ASSS(STOCK.DESC, "TEST DATA2");
-        ASSI(STOCK.BRAND_ID,1);
-        ASSS(STOCK.MFG_P_NO,"TEST_MFG_PART_NO2");
-        ASSL(STOCK.LIST_PR,2.00L);
-        ASSL(STOCK.SELL_PR,3.00L);
-        ASSI(STOCK.UNIT_ID,1);
-        ASSS(STOCK.COLOUR,"YLW");
-        ASSS(STOCK.P_GROUP,"TEST");
-        ASSL(STOCK.LAST_PO,291117);
-
-        if(ffisam(STOCK_BNR,IR)) {
-                printf("ISAM Error A\n");
-		exit(1);
-        }
-
-
-        printf("pre-ISAM B\n");
-        ASSS(STOCK.PCODE,"1234");
-        printf("pre-ISAM B1\n");
-        if(!ffisam(STOCK_BNR,RK,1,0)) {
-                printf("post-ISAM B2\n");
-                char description[sizeof(STOCK.DESC)+1];
-                GETSTR(description,STOCK.DESC);
-                printf("post-ISAM B3\n");
-                printf("%s\n",description);
-        } else {
-                printf("ISAM Error B\n");
-		exit(1);
-        }
-        printf("post-ISAM B4\n");
-
-*/
 
 void ffbackend_end() {
 	ffisam(STOCK_BNR,CF);
 
-	printf("ffbackend finishing...\r\n");
-	sleep(3);
+	printf("ffbackend finished\r\n");
 	ffend(0);
 }
 
 /*
+ * zero all fields
+ */
+static void null_stock() {
+	// TODO: Is there a quicker way?
+        ASSL(STOCK.UNIQKEY, 0);
+       	ASSS(STOCK.PCODE, "");
+       	ASSS(STOCK.DESC, "");
+       	ASSI(STOCK.BRAND_ID, 0);
+       	ASSS(STOCK.MFG_P_NO, "");
+       	ASSL(STOCK.LIST_PR, 0);
+       	ASSL(STOCK.SELL_PR, 0);
+       	ASSI(STOCK.UNIT_ID, 0);
+        ASSS(STOCK.COLOUR, "");
+	ASSS(STOCK.P_GROUP, "");
+	ASSL(STOCK.LAST_PO, 0);
+}
+
+/*
  * This decodes the JSON in "body" as a stock item.
- * FIXME: It currently writes to a global STOCK struct, rather than taking a struct as an argument.
+ * FIXME: It currently writes to a global STOCK struct, rather than taking a struct pointer as an argument.
  */
 static int json_to_stock(char *body, size_t body_len) {
+	printf("body: %.*s %d\n", body_len, body);
+
         // parse JSON
         jsmn_parser parser;
         jsmn_init(&parser);
@@ -108,31 +73,35 @@ static int json_to_stock(char *body, size_t body_len) {
         // parse again to do the job
         // TODO: write a "next" interface for jsmn to return one token at a time, to avoid this double-parsing
         jsmn_init(&parser); // re-initialisation is essential, this
-        num_tokens = jsmn_parse(&parser, line, line_len, t, num_tokens);
+        num_tokens = jsmn_parse(&parser, body, body_len, t, num_tokens);
         if (num_tokens < 0) return -1; // TODO: improve error handling mechanism
         if (num_tokens < 1 || t[0].type != JSMN_OBJECT) return -2;
+
 
         for (int i = 1; i < num_tokens; i++) {
                 if (jsmn_string_equal(body, &t[i], "uniqkey") == 0) { // TODO: Should UNIQKEY ever be set?
         		ASSL(STOCK.UNIQKEY,atol(body + t[++i].start));
                 } else if (jsmn_string_equal(body, &t[i], "pcode") == 0) {
-			char pcode_zts[pcode_len + 1];
 			++i;
-			memcpy(pcode_zts, body + t[i].start, t[i].end - t[i].start);
+		  	size_t pcode_len = t[i].end - t[i].start;
+			char pcode_zts[pcode_len + 1];
+			memcpy(pcode_zts, body + t[i].start, pcode_len);
 			pcode_zts[pcode_len] = '\0';
         		ASSS(STOCK.PCODE, pcode_zts); // FIXME: Find a way of assigning without having to create zero terminated strings.
                 } else if (jsmn_string_equal(body, &t[i], "desc") == 0) {
-			char desc_zts[desc_len + 1];
 			++i;
-			memcpy(desc_zts, body + t[i].start, t[i].end - t[i].start);
+		  	size_t desc_len = t[i].end - t[i].start;
+			char desc_zts[desc_len + 1];
+			memcpy(desc_zts, body + t[i].start, desc_len);
 			desc_zts[desc_len] = '\0';
         		ASSS(STOCK.DESC, desc_zts);
                 } else if (jsmn_string_equal(body, &t[i], "brand_id") == 0) {
         		ASSI(STOCK.BRAND_ID,atoi(body + t[++i].start));
                 } else if (jsmn_string_equal(body, &t[i], "mfg_p_no") == 0) {
-			char mfg_p_no_zts[mfg_p_no_len + 1];
 			++i;
-			memcpy(mfg_p_no_zts, body + t[i].start, t[i].end - t[i].start);
+		  	size_t mfg_p_no_len = t[i].end - t[i].start;
+			char mfg_p_no_zts[mfg_p_no_len + 1];
+			memcpy(mfg_p_no_zts, body + t[i].start, mfg_p_no_len);
 			mfg_p_no_zts[mfg_p_no_len] = '\0';
         		ASSS(STOCK.MFG_P_NO, mfg_p_no_zts);
                 } else if (jsmn_string_equal(body, &t[i], "list_pr") == 0) {
@@ -142,14 +111,28 @@ static int json_to_stock(char *body, size_t body_len) {
                 } else if (jsmn_string_equal(body, &t[i], "unit_id") == 0) {
         		ASSI(STOCK.UNIT_ID,atoi(body + t[++i].start));
                 } else if (jsmn_string_equal(body, &t[i], "in_stk") == 0) {
+        		ASSL(STOCK.IN_STK,atol(body + t[++i].start));
                 } else if (jsmn_string_equal(body, &t[i], "colour") == 0) {
+			++i;
+		  	size_t colour_len = t[i].end - t[i].start;
+			char colour_zts[colour_len + 1];
+			memcpy(colour_zts, body + t[i].start, colour_len);
+			colour_zts[colour_len] = '\0';
+        		ASSS(STOCK.COLOUR, colour_zts);
                 } else if (jsmn_string_equal(body, &t[i], "p_group") == 0) {
+			++i;
+		  	size_t p_group_len = t[i].end - t[i].start;
+			char p_group_zts[p_group_len + 1];
+			memcpy(p_group_zts, body + t[i].start, p_group_len);
+			p_group_zts[p_group_len] = '\0';
+        		ASSS(STOCK.P_GROUP, p_group_zts);
                 } else if (jsmn_string_equal(body, &t[i], "last_po") == 0) {
         		ASSL(STOCK.LAST_PO,atol(body + t[++i].start));
                 } else {
                         printf("Unexpected Key: |%.*s|\n", t[i].end-t[i].start, body + t[i].start);
                 }
         }
+	return 0;
 }
 
 /*
@@ -208,7 +191,18 @@ static size_t stock_to_json(char* out, size_t out_len) {
 /*
  * Create a new stock item, or output an error.
  */
-size_t ffbackend_put_stock(char *pcode, size_t pcode_len, char *body, char body_len, char *out, size_t out_len) {
+size_t ffbackend_put_stock(char *pcode, size_t pcode_len, char *body, size_t body_len, char *out, size_t out_len) {
+  	null_stock();
+	int r = json_to_stock(body, body_len);
+	if (r >= 0) {
+        	if (r = ffisam(STOCK_BNR,IR)) {
+	  		printf("ISAM error writing stock: %d\n", r);
+		} else {
+			return snprintf(out, out_len, "{\"code\":201, \"body\":\"created\"}\n");
+		}
+	} else {
+	  	printf("error json_to_stock: %d\n", r);
+	}
 	return snprintf(out, out_len, "{\"code\":500, \"body\":\"error creating stock item\"}\n");
 }
 
@@ -223,7 +217,7 @@ size_t ffbackend_get_stock(char *pcode, size_t pcode_len, char *out, size_t out_
 	pcode_zts[pcode_len] = '\0';
         ASSS(STOCK.PCODE, pcode_zts); // FIXME: Find a way of assigning without having to create zero terminated strings.
 
-        if(!ffisam(STOCK_BNR,RK,1,0)) {
+        if (!ffisam(STOCK_BNR,RK,1,0)) {
 		size_t num = stock_to_json(out, out_len);
 		if (num >= out_len) {
 			return snprintf(out, out_len, "{\"code\":500, \"body\":\"JSON longer than output buffer\"}\n");
@@ -239,11 +233,46 @@ size_t ffbackend_get_stock(char *pcode, size_t pcode_len, char *out, size_t out_
  * Update a stock item, or output an error.
  */
 size_t ffbackend_post_stock(char *pcode, size_t pcode_len, char *body, char body_len, char *out, size_t out_len) {
+        char pcode_zts[pcode_len + 1];
+        memcpy(pcode_zts, pcode, pcode_len);
+        pcode_zts[pcode_len] = '\0';
+        ASSS(STOCK.PCODE, pcode_zts); // FIXME: Find a way of assigning without having to create zero terminated strings.
+
+        if (!ffisam(STOCK_BNR,RK,1,0)) {
+		int r = json_to_stock(body, body_len);
+		if (r >= 0) {
+        		if (!ffisam(STOCK_BNR,WC)) {
+				return snprintf(out, out_len, "{\"code\":200, \"body\":\"updated\"}\n");
+			} else {
+				return snprintf(out, out_len, "{\"code\":500, \"body\":\"ISAM error\"}\n");
+			}
+		} else {
+			return snprintf(out, out_len, "{\"code\":500, \"body\":\"JSON error\"}\n");
+		}
+	} else {
+		return snprintf(out, out_len, "{\"code\":404, \"body\":\"stock pcode not found\"}\n");
+	}
 }
 
 /*
  * Delete a stock item, or output an error.
  */
 size_t ffbackend_delete_stock(char *pcode, size_t pcode_len, char *out, size_t out_len) {
+	null_stock(); // blank the stock record
+
+        char pcode_zts[pcode_len + 1];
+        memcpy(pcode_zts, pcode, pcode_len);
+        pcode_zts[pcode_len] = '\0';
+        ASSS(STOCK.PCODE, pcode_zts); // FIXME: Find a way of assigning without having to create zero terminated strings.
+
+        if (!ffisam(STOCK_BNR,RK,1,0)) {
+        	if (!ffisam(STOCK_BNR,DC,1,0)) {
+			return snprintf(out, out_len, "{\"code\":200, \"body\":\"deleted\"}\n");
+		} else {
+			return snprintf(out, out_len, "{\"code\":500, \"body\":\"ISAM error\"}\n");
+		}
+	} else {
+		return snprintf(out, out_len, "{\"code\":404, \"body\":\"stock pcode not found\"}\n");
+	}
 }
 
