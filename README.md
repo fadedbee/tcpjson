@@ -35,7 +35,6 @@ $ ./test.expect
 N.B. Resetting the data files is only required so that the created record has the expected UNIQ_KEY of 3.
 
 ## Results of Test
-
 <pre>
 tcpjson started...
 child
