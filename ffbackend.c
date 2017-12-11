@@ -96,7 +96,60 @@ void ffbackend_end() {
  * This decodes the JSON in "body" as a stock item.
  * FIXME: It currently writes to a global STOCK struct, rather than taking a struct as an argument.
  */
-static size_t json_to_stock(char *body, size_t body_len) {
+static int json_to_stock(char *body, size_t body_len) {
+        // parse JSON
+        jsmn_parser parser;
+        jsmn_init(&parser);
+
+        // parse once to find out how much space we need for tokens
+        int num_tokens = jsmn_parse(&parser, body, body_len, NULL, 0);
+        jsmntok_t t[num_tokens];
+
+        // parse again to do the job
+        // TODO: write a "next" interface for jsmn to return one token at a time, to avoid this double-parsing
+        jsmn_init(&parser); // re-initialisation is essential, this
+        num_tokens = jsmn_parse(&parser, line, line_len, t, num_tokens);
+        if (num_tokens < 0) return -1; // TODO: improve error handling mechanism
+        if (num_tokens < 1 || t[0].type != JSMN_OBJECT) return -2;
+
+        for (int i = 1; i < num_tokens; i++) {
+                if (jsmn_string_equal(body, &t[i], "uniqkey") == 0) { // TODO: Should UNIQKEY ever be set?
+        		ASSL(STOCK.UNIQKEY,atol(body + t[++i].start));
+                } else if (jsmn_string_equal(body, &t[i], "pcode") == 0) {
+			char pcode_zts[pcode_len + 1];
+			++i;
+			memcpy(pcode_zts, body + t[i].start, t[i].end - t[i].start);
+			pcode_zts[pcode_len] = '\0';
+        		ASSS(STOCK.PCODE, pcode_zts); // FIXME: Find a way of assigning without having to create zero terminated strings.
+                } else if (jsmn_string_equal(body, &t[i], "desc") == 0) {
+			char desc_zts[desc_len + 1];
+			++i;
+			memcpy(desc_zts, body + t[i].start, t[i].end - t[i].start);
+			desc_zts[desc_len] = '\0';
+        		ASSS(STOCK.DESC, desc_zts);
+                } else if (jsmn_string_equal(body, &t[i], "brand_id") == 0) {
+        		ASSI(STOCK.BRAND_ID,atoi(body + t[++i].start));
+                } else if (jsmn_string_equal(body, &t[i], "mfg_p_no") == 0) {
+			char mfg_p_no_zts[mfg_p_no_len + 1];
+			++i;
+			memcpy(mfg_p_no_zts, body + t[i].start, t[i].end - t[i].start);
+			mfg_p_no_zts[mfg_p_no_len] = '\0';
+        		ASSS(STOCK.MFG_P_NO, mfg_p_no_zts);
+                } else if (jsmn_string_equal(body, &t[i], "list_pr") == 0) {
+        		ASSL(STOCK.LIST_PR,atol(body + t[++i].start));
+                } else if (jsmn_string_equal(body, &t[i], "sell_pr") == 0) {
+        		ASSL(STOCK.SELL_PR,atol(body + t[++i].start));
+                } else if (jsmn_string_equal(body, &t[i], "unit_id") == 0) {
+        		ASSI(STOCK.UNIT_ID,atoi(body + t[++i].start));
+                } else if (jsmn_string_equal(body, &t[i], "in_stk") == 0) {
+                } else if (jsmn_string_equal(body, &t[i], "colour") == 0) {
+                } else if (jsmn_string_equal(body, &t[i], "p_group") == 0) {
+                } else if (jsmn_string_equal(body, &t[i], "last_po") == 0) {
+        		ASSL(STOCK.LAST_PO,atol(body + t[++i].start));
+                } else {
+                        printf("Unexpected Key: |%.*s|\n", t[i].end-t[i].start, body + t[i].start);
+                }
+        }
 }
 
 /*
