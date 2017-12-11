@@ -1,2 +1,46 @@
-# tcpjson
+# TCPJSON
 A proof-of-concept JSON/TCP server.
+
+## Principle Source Files:
+
+- tcpjson.c   - This is the parent process which owns the server socket and calls `fork` to start child processes for each TCP connection.
+- handle.  c  - Each child process calls handle() which processes TCP connection input line-by-line (of JSON).
+- ffbackend.c - The only part of the system which is FRED/ISAM aware.  It receives JSON and stock codes, and returns JSON strings.
+
+## Other Source Files
+- readline.c  - An inefficent, naive, line splitter.
+- jsmn.c      - A zero-copy JSON parser.  https://github.com/zserge/jsmn
+
+## Building and Running
+
+Log in as mspd.
+
+<pre>
+$ cd source/tcpjson
+$ make clean
+$ make
+$ ./tcpjson
+</pre>
+
+## Testing
+
+In another log-in session:
+
+<pre>
+$ cp orig.niv_test.dat niv_test.dat
+$ cp orig.niv_test.idx niv_test.idx
+$ ./test.expect
+</pre>
+
+N.B. Resetting the data files is only required so that the created record has the expected UNIQ_KEY of 3.
+
+## Further Work
+
+- Is jsmn the best way to parse JSON?  I've previously used http://www.digip.org/jansson/ on other projects.
+- Conversion between JSON request bodies and ISAM buffers needs to be generated as part of the build.  We cannot write conversion functions for every record type.
+- Handling functions will also need to be generated automatically.
+- Error handling could be improved.
+- Locking should be implemented on the POST and DELETE methods.
+- Add an example of selecting multiple records by some form of search.
+- See all the FIXME: and TODO: notes in the source.
+

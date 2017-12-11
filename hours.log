@@ -1,4 +1,5 @@
 2017-12-01
+
 17:20 starting project
 17:31 project builds and displays its name
 18:02 basic TCP server working
@@ -39,31 +40,62 @@
       - merged IMC makefile.elf into makefile
       - ffbackend runs when tcp session ends
 17:05
+-----
+ 3:55
+=====
+ 7:45
+
 
 2017-12-03
+
 07:45 looking for ffisam() call examples
 07:50
+=====
+ 0:05
+
 
 2017-12-06
+
 09:55 digesting ffisam call examples
 11:45
+-----
+ 1:50
 
 19:40 implementing a read function in ffbackend
 21:20 
+-----
+ 1:40
+=====
+ 3:30
 
 
 2017-12-07
+
 10:15 making get_stock return all fields
 11:21 write put_stock to create new stock items 
 11:50 
+=====
+ 1:35
 
 
 2017-12-08
+
 21:30 put_stock
 22:10
+=====
+ 0:40
 
 
 2017-12-11
+
 18:55 write put_stock to create new stock items
 21:12 documenting
+21:55
+=====
+ 2:55
+
+
+Total
+-----
+17:45
 

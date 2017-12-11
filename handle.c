@@ -12,6 +12,11 @@
 #define JSON_UNHANDLED "{\"code\": 404, \"body\":\"unhandled path\"}\n"
 #define JSON_SZ 4096
 
+/*
+ * This function is called for each TCP connection made to the server.
+ *
+ * It exits when it receives an empty line.
+ */
 int handle(int sockfd) {
 	ffbackend_begin(); // FIXME: move this call inside of the other ffbackend_ functions
 	char line[MAX_LINE_LEN];
