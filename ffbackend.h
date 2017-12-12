@@ -1,5 +1,5 @@
-#ifndef _FFBACKEND_H
-#define _FFBACKEND_H
+#ifndef __FFBACKEND_H_
+#define __FFBACKEND_H_
 
 void ffbackend_begin();
 void ffbackend_end();

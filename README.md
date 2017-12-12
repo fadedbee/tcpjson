@@ -8,10 +8,16 @@ A proof-of-concept JSON/TCP server.
 - ffbackend.c - The only part of the system which is FRED/ISAM aware.  It receives JSON and stock codes, and returns JSON strings.
 
 ## Other Source Files
+
 - readline.c  - An inefficent, naive, line splitter.
 - jsmn.c      - A zero-copy JSON parser.  https://github.com/zserge/jsmn
 
-## Building and Running
+## Protocol
+
+The protocol used on top of TCP is Newline Delimited JSON.  i.e. lines of JSON, one JSON object per line.
+This JSON protocol is structured so as to be easy to convert to an HTTP REST interface, if required, later.
+
+## -Building and Running
 
 Log in as mspd.
 
