@@ -17,7 +17,7 @@ A proof-of-concept JSON/TCP server.
 The protocol used on top of TCP is Newline Delimited JSON.  i.e. lines of JSON, one JSON object per line.
 This JSON protocol is structured so as to be easy to convert to an HTTP REST interface, if required, later.
 
-## -Building and Running
+## Building and Running
 
 Log in as mspd.
 
